@@ -10,7 +10,7 @@ app.get("/", (req, res) => {
   const keluaran = {
     success: true,
     author: "Eksa Dev",
-    sumber: "https://otakudesu.ltd/",
+    sumber: "https://otakudesu.lol/",
     pesan:
       "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
     data: {
@@ -73,7 +73,7 @@ app.get("/genres/:nama/page/:hal", (req, res) => {
 });
 
 async function getDataAnime() {
-  let { data } = await axios.get("https://otakudesu.ltd");
+  let { data } = await axios.get("https://otakudesu.lol");
 
   const $ = cheerio.load(data);
 
@@ -106,7 +106,7 @@ async function getDataAnime() {
   let objek = {
     success: true,
     author: "Eksa Dev",
-    sumber: "https://otakudesu.ltd/",
+    sumber: "https://otakudesu.lol/",
     pesan:
       "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
     data: {
@@ -118,7 +118,7 @@ async function getDataAnime() {
 }
 
 async function getDetailAnime(url) {
-  let { data } = await axios.get("https://otakudesu.ltd/anime/" + url);
+  let { data } = await axios.get("https://otakudesu.lol/anime/" + url);
 
   const $ = cheerio.load(data);
 
@@ -164,7 +164,7 @@ async function getDetailAnime(url) {
   let objek = {
     success: true,
     author: "Eksa Dev",
-    sumber: "https://otakudesu.ltd/",
+    sumber: "https://otakudesu.lol/",
     pesan:
       "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
     data: {
@@ -176,7 +176,7 @@ async function getDetailAnime(url) {
 }
 
 async function streamNime(url) {
-  const { data } = await axios.get("https://otakudesu.ltd/episode/" + url);
+  const { data } = await axios.get("https://otakudesu.lol/episode/" + url);
 
   const $ = cheerio.load(data);
 
@@ -199,7 +199,7 @@ async function streamNime(url) {
   let objek = {
     success: true,
     author: "Eksa Dev",
-    sumber: "https://otakudesu.ltd/",
+    sumber: "https://otakudesu.lol/",
     pesan:
       "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
     data: {
@@ -212,7 +212,7 @@ async function streamNime(url) {
 
 const searchNime = async (url) => {
   const { data } = await axios.get(
-    `https://otakudesu.ltd/?s=${url}&post_type=anime`
+    `https://otakudesu.lol/?s=${url}&post_type=anime`
   );
 
   const $ = cheerio.load(data);
@@ -243,7 +243,7 @@ const searchNime = async (url) => {
   let objek = {
     success: true,
     author: "Eksa Dev",
-    sumber: "https://otakudesu.ltd/",
+    sumber: "https://otakudesu.lol/",
     pesan:
       "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
     data: {
@@ -275,7 +275,7 @@ const kategoriList = async () => {
   let objek = {
     success: true,
     author: "Eksa Dev",
-    sumber: "https://otakudesu.ltd/",
+    sumber: "https://otakudesu.lol/",
     pesan:
       "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
     data: {
@@ -322,7 +322,7 @@ const genres = async (nama, hal) => {
   let objek = {
     success: true,
     author: "Eksa Dev",
-    sumber: "https://otakudesu.ltd/",
+    sumber: "https://otakudesu.lol/",
     pesan:
       "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
     data: {
