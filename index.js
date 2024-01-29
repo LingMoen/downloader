@@ -5,7 +5,10 @@ import os from 'os';
 import path from 'path';
 import cheerio from 'cheerio';
 
-
+import {
+	fileURLToPath
+} from "url"
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express();
 const port = process.env.PORT || 3000; // Menggunakan variabel PORT dari lingkungan jika tersedia
 const hostname = process.env.HOSTNAME || 'localhost'; // Ganti 'localhost' sesuai dengan hostname Anda
