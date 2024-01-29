@@ -14,7 +14,7 @@ const port = process.env.PORT || 3000; // Menggunakan variabel PORT dari lingkun
 const hostname = process.env.HOSTNAME || 'localhost'; // Ganti 'localhost' sesuai dengan hostname Anda
 
 
-const tempDir = path.join(__dirname, 'temp'); // Assuming "temp" is in the same directory as your script
+const tempikDir = path.join(__dirname, 'temp'); // Assuming "temp" is in the same directory as your script
 app.use('/tmp', express.static(tempDir));
 
 
@@ -144,7 +144,7 @@ async function downloadImage(url) {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     const tempDir = os.tmpdir();
     const randomCode = Math.random().toString(36).substring(7);
-    const imagePath = path.join(tempDir, `downloaded_image_${randomCode}.png`);
+    const imagePath = path.join(tempikDir, `downloaded_image_${randomCode}.png`);
 
     fs.writeFileSync(imagePath, Buffer.from(response.data, 'binary'));
 
@@ -160,7 +160,7 @@ async function downloadVideo(url) {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     const tempDir = os.tmpdir();
     const randomCode = Math.random().toString(36).substring(7);
-    const videoPath = path.join(tempDir, `downloaded_video_${randomCode}.mp4`);
+    const videoPath = path.join(tempikDir, `downloaded_video_${randomCode}.mp4`);
 
     fs.writeFileSync(videoPath, Buffer.from(response.data, 'binary'));
 
