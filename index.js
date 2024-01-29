@@ -15,7 +15,7 @@ const hostname = process.env.HOSTNAME || 'localhost'; // Ganti 'localhost' sesua
 
 
 const tempikDir = path.join(__dirname, 'temp'); // Assuming "temp" is in the same directory as your script
-app.use('/tempikDir', express.static(tempikDir));
+app.use('/temp', express.static(tempikDir));
 
 
 app.get("/", (req, res) => {
