@@ -1,19 +1,15 @@
 {
-  "name": "express_api_deplot",
+  "name": "instagram-downloader",
   "version": "1.0.0",
-  "description": "",
+  "description": "Instagram downloader using Node.js and Express",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start" :"nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
+    "express": "*",
     "axios": "*",
-    "cheerio" : "*",
-    "nodemon": "^3.0.3"
+    "cheerio": "*"
   }
 }
