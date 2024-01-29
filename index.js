@@ -10,6 +10,11 @@ const app = express();
 const port = process.env.PORT || 3000; // Menggunakan variabel PORT dari lingkungan jika tersedia
 const hostname = process.env.HOSTNAME || 'localhost'; // Ganti 'localhost' sesuai dengan hostname Anda
 
+
+const tempDir = path.join(__dirname, 'temp'); // Assuming "temp" is in the same directory as your script
+app.use('/tmp', express.static(tempDir));
+
+
 app.get("/", (req, res) => {
   res.type("json");
 
@@ -165,7 +170,7 @@ async function downloadVideo(url) {
 
 
 // Middleware untuk mengizinkan akses ke direktori os.tmpdir()
-app.use('/tmp', express.static(os.tmpdir()));
+
 
 app.use(express.json());
 
@@ -214,10 +219,10 @@ app.get('/igdl', async (req, res) => {
 
         if (type === 'image') {
           let path_img = await downloadImage(url);
-          array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/tmp/${path.basename(path_img)}` });
+          array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/${tempDir}/${path.basename(path_img)}` });
         } else if (type === 'video') {
           let path_vid = await downloadVideo(url);
-          array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/tmp/${path.basename(path_vid)}` });
+          array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/${tempDir}/${path.basename(path_vid)}` });
         }
       }
     }
