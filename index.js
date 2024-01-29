@@ -14,8 +14,8 @@ const port = process.env.PORT || 3000; // Menggunakan variabel PORT dari lingkun
 const hostname = process.env.HOSTNAME || 'localhost'; // Ganti 'localhost' sesuai dengan hostname Anda
 
 
-const tempikDir = path.join(__dirname, 'temp'); // Assuming "temp" is in the same directory as your script
-app.use('/temp', express.static(tempikDir));
+const tempikDir = path.join(__dirname, 'tmp'); // Assuming "temp" is in the same directory as your script
+app.use('/tmp', express.static(tempikDir));
 
 
 app.get("/", (req, res) => {
