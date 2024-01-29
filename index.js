@@ -14,7 +14,7 @@ const port = process.env.PORT || 3000; // Menggunakan variabel PORT dari lingkun
 const hostname = process.env.HOSTNAME || 'localhost'; // Ganti 'localhost' sesuai dengan hostname Anda
 
 
-const tempikDir = path.join(__dirname, 'tmp'); // Assuming "temp" is in the same directory as your script
+const tempikDir = path.join(__dirname, 'tmp');
 app.use('/tmp', express.static(tempikDir));
 
 
@@ -142,9 +142,9 @@ const igdl2 = async (instagramUrl) => {
 async function downloadImage(url) {
   try {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
-    const tempDir = os.tmpdir();
+    const tempDir = path.join(__dirname, 'tmp'); // Assuming "tmp" is in the same directory as your script
     const randomCode = Math.random().toString(36).substring(7);
-    const imagePath = path.join(tempikDir, `downloaded_image_${randomCode}.png`);
+    const imagePath = path.join(tempDir, `downloaded_image_${randomCode}.png`);
 
     fs.writeFileSync(imagePath, Buffer.from(response.data, 'binary'));
 
@@ -158,9 +158,9 @@ async function downloadImage(url) {
 async function downloadVideo(url) {
   try {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
-    const tempDir = os.tmpdir();
+    const tempDir = path.join(__dirname, 'tmp'); // Assuming "tmp" is in the same directory as your script
     const randomCode = Math.random().toString(36).substring(7);
-    const videoPath = path.join(tempikDir, `downloaded_video_${randomCode}.mp4`);
+    const videoPath = path.join(tempDir, `downloaded_video_${randomCode}.mp4`);
 
     fs.writeFileSync(videoPath, Buffer.from(response.data, 'binary'));
 
@@ -170,6 +170,7 @@ async function downloadVideo(url) {
     throw error;
   }
 }
+
 
 
 // Middleware untuk mengizinkan akses ke direktori os.tmpdir()
@@ -222,7 +223,7 @@ app.get('/igdl', async (req, res) => {
 
         if (type === 'image') {
           let path_img = await downloadImage(url);
-          array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/${path.basename(path_img)}` });
+          array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/${tempikDir}/${path.basename(path_img)}` });
         } else if (type === 'video') {
           let path_vid = await downloadVideo(url);
           array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/${tempikDir}/${path.basename(path_vid)}` });
