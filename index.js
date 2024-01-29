@@ -241,7 +241,7 @@ app.get('/igdl', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error processing request:', error.message);
+    console.error('Error processing request:', error);
     res.status(500).json({ error: 'Failed to process request' });
   }
 });
