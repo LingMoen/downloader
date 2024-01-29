@@ -219,10 +219,10 @@ app.get('/igdl', async (req, res) => {
 
         if (type === 'image') {
           let path_img = await downloadImage(url);
-          array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/${tempDir}/${path.basename(path_img)}` });
+          array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/${path.basename(path_img)}` });
         } else if (type === 'video') {
           let path_vid = await downloadVideo(url);
-          array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/${tempDir}/${path.basename(path_vid)}` });
+          array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/${path.basename(path_vid)}` });
         }
       }
     }
