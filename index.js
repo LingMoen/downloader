@@ -186,13 +186,13 @@ app.get('/igdl', async (req, res) => {
     let result;
 
     try {
-      result = await igdl1(m.text);
+      result = await igdl1(url);
     } catch (error1) {
       // If igdl1 encounters an error, try igdl2
       console.error("igdl1 error:", error1);
 
       try {
-        result = await igdl2(m.text);
+        result = await igdl2(url);
       } catch (error2) {
         console.error("igdl2 error:", error2);
         return res.status(400).json({ error: error2 });
