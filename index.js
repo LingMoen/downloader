@@ -1,338 +1,241 @@
-const express = require("express");
-const axios = require("axios");
+const express = require('express');
+const axios = require('axios');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const cheerio = require("cheerio");
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000; // Menggunakan variabel PORT dari lingkungan jika tersedia
+const hostname = process.env.HOSTNAME || 'localhost'; // Ganti 'localhost' sesuai dengan hostname Anda
 
 app.get("/", (req, res) => {
   res.type("json");
 
   const keluaran = {
     success: true,
-    author: "Eksa Dev",
-    sumber: "https://otakudesu.lol/",
-    pesan:
-      "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
+    author: "Nex",
     data: {
-      Ambil_anime_terbaru: "/terbaru",
-      Ambil_detail_anime: "/detail/:endpoint",
-      Ambil_stream_anime: "/stream/:endpoint",
-      Ambil_search_anime: "/search/:namaanime",
-      Ambil_all_kategori_list: "/genrelist",
-      Ambil_data_genre: "/genres/:endpoint",
+      igdl: "/igdl"
     },
   };
   res.send(keluaran);
 });
 
-app.get("/terbaru", (req, res) => {
-  res.type("json");
-
-  getDataAnime().then((result) => {
-    res.send(result);
-  });
-});
-
-app.get("/detail/:nama", (req, res) => {
-  const url = req.params.nama;
-
-  getDetailAnime(url).then((result) => {
-    res.send(result);
-  });
-});
-
-app.get("/stream/:namanime", (req, res) => {
-  const url = req.params.namanime;
-
-  streamNime(url).then((result) => {
-    res.send(result);
-  });
-});
-
-app.get("/search/:nama", (req, res) => {
-  const url = req.params.nama;
-
-  searchNime(url).then((result) => {
-    res.send(result);
-  });
-});
-
-app.get("/genrelist", (req, res) => {
-  kategoriList().then((response) => {
-    res.send(response);
-  });
-});
-
-app.get("/genres/:nama/page/:hal", (req, res) => {
-  const nama = req.params.nama;
-  const hal = req.params.hal;
-
-  genres(nama, hal).then((response) => {
-    res.send(response);
-  });
-});
-
-async function getDataAnime() {
-  let { data } = await axios.get("https://otakudesu.lol");
-
-  const $ = cheerio.load(data);
-
-  let arr = [];
-
-  const venz = $(".venz")
-    .first()
-    .find(".detpost")
-    .each((index, element) => {
-      const jj = $(element).find(".jdlflm").text();
-      const hariUpload = $(element).find(".epztipe").text();
-      const episodeKe = $(element).find(".epz").text();
-      const tanggalUp = $(element).find(".newnime").text();
-      const thumbnail = $(element).find("img").attr("src");
-      let endpoint = $(element).find("a").attr("href");
-
-      endpoint = endpoint.split("/")[4];
-
-      arr.push({
-        id: index + 1,
-        judul: jj,
-        hariUp: hariUpload,
-        episodeBaru: episodeKe,
-        tanggalUpload: tanggalUp,
-        thumb: thumbnail,
-        endpoint: endpoint,
-      });
-    });
-
-  let objek = {
-    success: true,
-    author: "Eksa Dev",
-    sumber: "https://otakudesu.lol/",
-    pesan:
-      "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
-    data: {
-      arr,
-    },
-  };
-
-  return objek;
-}
-
-async function getDetailAnime(url) {
-  let { data } = await axios.get("https://otakudesu.lol/anime/" + url);
-
-  const $ = cheerio.load(data);
-
-  let arr = [];
-  let arr2 = [];
-
-  const fotonime = $(".venser").find(".fotoanime img").attr("src");
-  const judul = $(".venser").find(".infozingle p").first().text();
-  const skor = $(".venser").find(".infozingle p:nth-child(3)").text();
-  const produser = $(".venser").find(".infozingle p:nth-child(4)").text();
-  const status = $(".venser").find(".infozingle p:nth-child(6)").text();
-  const totaleps = $(".venser").find(".infozingle p:nth-child(7)").text();
-  const studio = $(".venser").find(".infozingle p:nth-child(10)").text();
-  const genre = $(".venser").find(".infozingle p:nth-child(11)").text();
-  const sinopsis = $(".venser").find(".sinopc").text();
-
-  $(".venser .episodelist ul li").each((index, element) => {
-    const episod = $(element).find("a").text();
-    let endpoint = $(element).find("a").attr("href");
-
-    endpoint = endpoint.split("/")[4];
-
-    arr2.push({
-      id: index + 1,
-      title: episod,
-      endpoint: endpoint,
-    });
-  });
-
-  arr.push({
-    fotonime: fotonime,
-    judul: judul,
-    skor: skor,
-    produser: produser,
-    status: status,
-    totaleps: totaleps,
-    studio: studio,
-    genre: genre,
-    sinopsis: sinopsis,
-    episodelist: arr2,
-  });
-
-  let objek = {
-    success: true,
-    author: "Eksa Dev",
-    sumber: "https://otakudesu.lol/",
-    pesan:
-      "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
-    data: {
-      arr,
-    },
-  };
-
-  return objek;
-}
-
-async function streamNime(url) {
-  const { data } = await axios.get("https://otakudesu.lol/episode/" + url);
-
-  const $ = cheerio.load(data);
-
-  const arr = [];
-  const download = [];
-
-  const jdlflm = $(".venser").find(".posttl").text();
-  const iframe = $(".responsive-embed-stream iframe").attr("src");
-
-  const el = $(".venser").find(".download ul").html();
-
-  download.push(el);
-
-  arr.push({
-    judul: jdlflm,
-    iframe: iframe,
-    link: download,
-  });
-
-  let objek = {
-    success: true,
-    author: "Eksa Dev",
-    sumber: "https://otakudesu.lol/",
-    pesan:
-      "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
-    data: {
-      arr,
-    },
-  };
-
-  return objek;
-}
-
-const searchNime = async (url) => {
-  const { data } = await axios.get(
-    `https://otakudesu.lol/?s=${url}&post_type=anime`
-  );
-
-  const $ = cheerio.load(data);
-
-  const arr = [];
-
-  $(".chivsrc li").each((index, element) => {
-    const thumb = $(element).find("img").attr("src");
-    const nama = $(element).find("a").first().text();
-    const genres = $(element).find(".set").first().text();
-    const status = $(element).find("div:nth-child(4)").text();
-    const rating = $(element).find("div:nth-child(5)").text();
-    let endpoint = $(element).find("a").attr("href");
-
-    endpoint = endpoint.split("/")[4];
-
-    arr.push({
-      id: index + 1,
-      thumb: thumb,
-      nama: nama,
-      genres: genres,
-      status: status,
-      rating: rating,
-      endpoint: endpoint,
-    });
-  });
-
-  let objek = {
-    success: true,
-    author: "Eksa Dev",
-    sumber: "https://otakudesu.lol/",
-    pesan:
-      "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
-    data: {
-      arr,
-    },
-  };
-
-  return objek;
+const generateRandomIP = () => {
+  const octet = () => Math.floor(Math.random() * 256);
+  return `${octet()}.${octet()}.${octet()}.${octet()}`;
 };
 
-const kategoriList = async () => {
-  const { data } = await axios.get(`https://otakudesu.lol/genre-list/`);
-
-  const $ = cheerio.load(data);
-
-  const arr = [];
-
-  $(".genres li a").each((index, element) => {
-    const nama = $(element).text();
-    const endpoint = $(element).attr("href").split("/")[2];
-
-    arr.push({
-      id: index + 1,
-      nama: nama,
-      endpoint: endpoint,
-    });
-  });
-
-  let objek = {
-    success: true,
-    author: "Eksa Dev",
-    sumber: "https://otakudesu.lol/",
-    pesan:
-      "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
-    data: {
-      arr,
-    },
-  };
-
-  return objek;
+const checkMediaType = (url) => {
+  const supportedImageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+  const supportedVideoExtensions = ['mp4'];
+  const fileExtension = url.toLowerCase();
+  if (supportedImageExtensions.includes(fileExtension)) {
+    return 'image';
+  } else if (supportedVideoExtensions.includes(fileExtension)) {
+    return 'video';
+  } else {
+    return 'unknown';
+  }
 };
 
-const genres = async (nama, hal) => {
-  const { data } = await axios.get(`https://otakudesu.lol/genres/${nama}/page/${hal}`);
+function getHostname(){
+  const url = process?.env?.NEXT_PUBLIC_SITE_URL && process.env.NEXT_PUBLIC_SITE_URL !== '' ? process.env.NEXT_PUBLIC_SITE_URL : process?.env?.VERCEL_URL && process.env.VERCEL_URL !== '' ? process.env.VERCEL_URL : 'https://supabase.com/dashboard'
+  return url.includes('http') ? url : `https://${url}`
+}
 
-  const $ = cheerio.load(data);
-  const arr = [];
 
-  $(".col-anime-con").each((index, element) => {
-    const nama = $(element).find(".col-anime .col-anime-title").text();
-    const studio = $(element).find(".col-anime .col-anime-studio").text();
-    const eps = $(element).find(".col-anime .col-anime-eps").text();
-    const rating = $(element).find(".col-anime .col-anime-rating").text();
-    const genre = $(element).find(".col-anime .col-anime-genre").text();
-    const synopsis = $(element).find(".col-anime .col-synopsis").text();
-    const thumb = $(element)
-      .find(".col-anime .col-anime-cover img")
-      .attr("src");
-    const endpoint = $(element)
-      .find(".col-anime .col-anime-title a")
-      .attr("href")
-      .split("/")[4];
+const getMimeTypeFromUrl = async (url) => {
+  try {
+    const response = await axios.head(url);
+    const contentTypeHeader = response.headers['content-type'];
+    const [mediaType] = contentTypeHeader.split('/');
+    return mediaType;
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+};
+//end tools
 
-    arr.push({
-      nama: nama,
-      thumb: thumb,
-      studio: studio,
-      eps: eps,
-      rating: rating,
-      genre: genre,
-      synopsis: synopsis,
-      endpoint: endpoint,
-    });
-  });
+export const igdl1 = async (instagramUrl) => {
+  try {
+    const base_url = "https://www.save-free.com/";
+    const headers = {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'Accept': 'text/html, */*; q=0.01',
+      'X-Valy-Cache': 'accpted',
+      'X-Requested-With': 'XMLHttpRequest',
+      'User-Agent': 'Mozilla/5.0 (iPhone14,3; U; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Mobile/19A346 Safari/602.1',
+      'Referer': 'https://www.save-free.com/',
+      'X-Forwarded-For': generateRandomIP(),
+    };
 
-  let objek = {
-    success: true,
-    author: "Eksa Dev",
-    sumber: "https://otakudesu.lol/",
-    pesan:
-      "Kami mohon izin kepada pihak otakudesu untuk mengambil data dari web kalian",
-    data: {
-      arr,
-    },
+    const postData = `instagram_url=${encodeURIComponent(instagramUrl)}&type=media&resource=save`;
+
+    const response = await axios.post(`${base_url}process`, postData, { headers });
+
+    const result = response.data.map(item => ({
+      title: item.meta.title,
+      urls: item.url.map(urlItem => ({
+        url: urlItem.url,
+        type: checkMediaType(urlItem.type)
+      }))
+    }));
+
+    return result;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+
+export const igdl2 = async (instagramUrl) => {
+  const headers = {
+    'Accept': 'application/json, text/plain, */*',
+    'Content-Type': 'application/json',
+    'X-XSRF-TOKEN': 'eyJpdiI6InNzNVlEQVJxcVYyVkdvWURBTGNad1E9PSIsInZhbHVlIjoiZkxNOGRKYXREdkVLZWRQeWp1bUFadG5BYWhOTzdoWDlXQ2FaQVwvV2NnZkQ2TzcyYVRuMlNRUkVHam1Nc29KTGRCam16U2xFODZFbkFvYldmdkxUUSt5ZHRyWUljNHZjWk9HZUp4elBxaHFRcGxIUGlxS1hQZUtmTVRoMkxjNVJ1IiwibWFjIjoiOGI0YTA4NmIyODgzZGJmMmIwNzU2MGRiYzk4YjQ5OGUzMzYwZGRiZjEzYjdlYjVjM2NhNTZjMGJiMWViMGU3YSJ9',
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 12; SM-A9080 Build/SP1A.210812.016; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/119.0.6045.17 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/436.0.0.35.101;]',
+    'Referer': 'https://snapinst.com/'
   };
 
-  return objek;
+  const data = {
+    url: instagramUrl,
+    ts: Date.now(),
+    _ts: Date.now(),
+    _tsc: 0,
+    _s: '045b2f13f32f465471a3cd1af4c63f83b6e50cb54c5c642e3953ef152ef1fea6'
+  };
+
+  try {
+    const response = await axios.post('https://snapinst.com/api/convert', data, { headers });
+    
+    const downloadLinks = [];
+    let dataArray = response.data; // Declare dataArray using let
+    
+    await Promise.all(dataArray.map(async (item) => {
+      await Promise.all(item.url.map(async (urlItem) => {
+        const urlString = urlItem.url;
+        const tipe = await getMimeTypeFromUrl(urlString);
+        downloadLinks.push({ title: item.meta.title, urls: [{ url: urlString, type: tipe }] });
+      }));
+    }));
+
+    return downloadLinks;
+  } catch (error) {
+    console.error(error);
+  }
 };
+
+
+
+async function downloadImage(url) {
+  try {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    const tempDir = os.tmpdir();
+    const randomCode = Math.random().toString(36).substring(7);
+    const imagePath = path.join(tempDir, `downloaded_image_${randomCode}.png`);
+
+    fs.writeFileSync(imagePath, Buffer.from(response.data, 'binary'));
+
+    return imagePath;
+  } catch (error) {
+    console.error('Error downloading image:', error.message);
+    throw error;
+  }
+}
+
+async function downloadVideo(url) {
+  try {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    const tempDir = os.tmpdir();
+    const randomCode = Math.random().toString(36).substring(7);
+    const videoPath = path.join(tempDir, `downloaded_video_${randomCode}.mp4`);
+
+    fs.writeFileSync(videoPath, Buffer.from(response.data, 'binary'));
+
+    return videoPath;
+  } catch (error) {
+    console.error('Error downloading video:', error.message);
+    throw error;
+  }
+}
+
+
+// Middleware untuk mengizinkan akses ke direktori os.tmpdir()
+app.use('/tmp', express.static(os.tmpdir()));
+
+app.use(express.json());
+
+// ... (kode sebelumnya)
+
+app.get('/igdl', async (req, res) => {
+  try {
+    const { url } = req.query;
+
+    if (!url) {
+      return res.status(400).json({ error: 'Parameter url is required' });
+    }
+
+    if (!/https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)/.test(url)) {
+      return res.status(400).json({ error: "Example: https://www.instagram.com/p/Cz1fTwMJFpx/?igsh=MXRrY2g4eWNucGoyZg==" });
+    }
+
+    let result;
+
+    try {
+      result = await igdl1(m.text);
+    } catch (error1) {
+      // If igdl1 encounters an error, try igdl2
+      console.error("igdl1 error:", error1);
+
+      try {
+        result = await igdl2(m.text);
+      } catch (error2) {
+        console.error("igdl2 error:", error2);
+        return res.status(400).json({ error: error2 });
+      }
+    }
+
+    if (!result || result.length === 0) {
+      return res.status(400).json({ error: "No media found on the provided Instagram URL." });
+    }
+
+    const array_media = [];
+
+    for (const item of result) {
+      const { title, urls } = item;
+      let captions = `Title: ${title}\n`;
+
+      for (const urlItem of urls) {
+        const { url, type } = urlItem;
+
+        if (type === 'image') {
+          let path_img = await downloadImage(url);
+          array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/tmp/${path.basename(path_img)}` });
+        } else if (type === 'video') {
+          let path_vid = await downloadVideo(url);
+          array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/tmp/${path.basename(path_vid)}` });
+        }
+      }
+    }
+    // Hapus file setelah respons dikirim
+    res.json(array_media);
+    // Ambil path file dari array_media dan hapus setelah respons dikirim
+    array_media.forEach(async (item) => {
+      try {
+        await fs.promises.unlink(item.path);
+        console.log(`File ${item.path} deleted.`);
+      } catch (error) {
+        console.error(`Error deleting file ${item.path}:`, error);
+      }
+    });
+  } catch (error) {
+    console.error('Error processing request:', error.message);
+    res.status(500).json({ error: 'Failed to process request' });
+  }
+});
 
 app.listen(port, () => {
-  console.log(`Listen on port ${port}`);
+  console.log(`Server is running on http://${hostname}:${port}`);
 });
