@@ -1,9 +1,11 @@
-const express = require('express');
-const axios = require('axios');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const cheerio = require("cheerio");
+import express from 'express';
+import axios from 'axios';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import cheerio from 'cheerio';
+
+
 const app = express();
 const port = process.env.PORT || 3000; // Menggunakan variabel PORT dari lingkungan jika tersedia
 const hostname = process.env.HOSTNAME || 'localhost'; // Ganti 'localhost' sesuai dengan hostname Anda
@@ -57,7 +59,7 @@ const getMimeTypeFromUrl = async (url) => {
 };
 //end tools
 
-export const igdl1 = async (instagramUrl) => {
+const igdl1 = async (instagramUrl) => {
   try {
     const base_url = "https://www.save-free.com/";
     const headers = {
@@ -90,7 +92,7 @@ export const igdl1 = async (instagramUrl) => {
 };
 
 
-export const igdl2 = async (instagramUrl) => {
+const igdl2 = async (instagramUrl) => {
   const headers = {
     'Accept': 'application/json, text/plain, */*',
     'Content-Type': 'application/json',
