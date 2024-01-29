@@ -42,7 +42,7 @@ const checkMediaType = (url) => {
 };
 
 function getHostname(){
-  const url = process?.env?.NEXT_PUBLIC_SITE_URL && process.env.NEXT_PUBLIC_SITE_URL !== '' ? process.env.NEXT_PUBLIC_SITE_URL : process?.env?.VERCEL_URL && process.env.VERCEL_URL !== '' ? process.env.VERCEL_URL : 'https://supabase.com/dashboard'
+  const url = process.env.VERCEL_URL
   return url.includes('http') ? url : `https://${url}`
 }
 
