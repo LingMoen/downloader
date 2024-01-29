@@ -42,7 +42,7 @@ const checkMediaType = (url) => {
 };
 
 function getHostname(){
-  const url = process.env.VERCEL_URL
+  const url = "https://downloader-nex.vercel.app";
   return url.includes('http') ? url : `https://${url}`
 }
 
