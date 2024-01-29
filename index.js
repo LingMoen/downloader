@@ -225,7 +225,7 @@ app.get('/igdl', async (req, res) => {
           array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/${path.basename(path_img)}` });
         } else if (type === 'video') {
           let path_vid = await downloadVideo(url);
-          array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/${path.basename(path_vid)}` });
+          array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/${tempikDir}/${path.basename(path_vid)}` });
         }
       }
     }
