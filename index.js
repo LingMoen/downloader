@@ -235,12 +235,16 @@ app.get('/igdl', async (req, res) => {
     // Ambil path file dari array_media dan hapus setelah respons dikirim
     array_media.forEach(async (item) => {
       try {
-        await fs.promises.unlink(item.path);
-        console.log(`File ${item.path} deleted.`);
+        // Hapus file setelah 10 menit
+        setTimeout(async () => {
+          await fs.promises.unlink(item.path);
+          console.log(`File ${item.path} deleted.`);
+        }, 10 * 60 * 1000); // 10 menit
       } catch (error) {
         console.error(`Error deleting file ${item.path}:`, error);
       }
     });
+    
   } catch (error) {
     console.error('Error processing request:', error);
     res.status(500).json({ error: 'Failed to process request\n' + error});
