@@ -144,7 +144,7 @@ async function downloadImage(url) {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     const tempDir = path.join(__dirname, 'tmp'); // Assuming "tmp" is in the same directory as your script
     const randomCode = Math.random().toString(36).substring(7);
-    const imagePath = path.join(tempDir, `downloaded_image_${randomCode}.png`);
+    const imagePath = `/tmp/downloaded_image_${randomCode}.png`;
 
     fs.writeFileSync(imagePath, Buffer.from(response.data, 'binary'));
 
@@ -160,7 +160,7 @@ async function downloadVideo(url) {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     const tempDir = path.join(__dirname, 'tmp'); // Assuming "tmp" is in the same directory as your script
     const randomCode = Math.random().toString(36).substring(7);
-    const videoPath = path.join(tempDir, `downloaded_video_${randomCode}.mp4`);
+    const videoPath = `/tmp/downloaded_video_${randomCode}.mp4`;
 
     fs.writeFileSync(videoPath, Buffer.from(response.data, 'binary'));
 
@@ -223,10 +223,10 @@ app.get('/igdl', async (req, res) => {
 
         if (type === 'image') {
           let path_img = await downloadImage(url);
-          array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/${tempikDir}/${path.basename(path_img)}` });
+          array_media.push({ path: path_img, caption: captions, url: `${getHostname()}/tmp/${path.basename(path_img)}` });
         } else if (type === 'video') {
           let path_vid = await downloadVideo(url);
-          array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/${tempikDir}/${path.basename(path_vid)}` });
+          array_media.push({ path: path_vid, caption: captions, url: `${getHostname()}/tmp/${path.basename(path_vid)}` });
         }
       }
     }
