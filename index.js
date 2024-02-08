@@ -315,7 +315,7 @@ app.get('/igdl', async (req, res) => {
       }
     }
     
-    res.json(JSON.stringify(result_upload, null, 2));
+    res.json(result_upload);
     
     for (let item of result_upload.media) {
       try {
