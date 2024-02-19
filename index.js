@@ -14,6 +14,7 @@ const {
 	promisify
 } = require('util');
 const mm = require('music-metadata');
+const NodeID3 = require('node-id3');
 
 const readFileAsync = promisify(fs.readFile);
 const tempDir = path.join(os.tmpdir(), "temp");
@@ -170,50 +171,53 @@ const checkMediaType = (url) => {
 
 // Function to add metadata to audio file
 async function addMetadataToAudio(url, title, artist, imgUrl) {
-	try {
-		// Fetch image data if imgUrl is provided
-		let image;
-		if (imgUrl) {
-			let imageResponse = await axios.get(imgUrl, {
-				responseType: 'arraybuffer'
-			});
-			image = imageResponse.data;
-		} else {
-			let imageResponse = await axios.get("https://raw.githubusercontent.com/LingMoen/COLAB/main/wife-cover.jpg", {
-				responseType: 'arraybuffer'
-			});
-			image = imageResponse.data;
-		}
+    try {
+        // Fetch image data if imgUrl is provided
+        let image;
+        if (imgUrl) {
+            let imageResponse = await axios.get(imgUrl, {
+                responseType: 'arraybuffer'
+            });
+            image = imageResponse.data;
+        } else {
+            let imageResponse = await axios.get("https://raw.githubusercontent.com/LingMoen/COLAB/main/wife-cover.jpg", {
+                responseType: 'arraybuffer'
+            });
+            image = imageResponse.data;
+        }
 
-		// Fetch audio data
-		const audioResponse = await axios.get(url, {
-			responseType: 'arraybuffer'
-		});
-		const audioBuffer = audioResponse.data;
+        // Fetch audio data
+        const audioResponse = await axios.get(url, {
+            responseType: 'arraybuffer'
+        });
+        const audioBuffer = audioResponse.data;
 
-		// Parse audio metadata
-		const metadata = {
-			title: title || "Nexstar",
-			artist: artist || "Lingz - Lappy",
-			picture: image ? [{
-				format: 'image/jpeg',
-				data: image
-			}] : undefined,
-		};
-		const audioMetadata = await mm.parseBuffer(audioBuffer, {
-			contentType: 'audio/mpeg',
-			...metadata
-		});
+        // Write metadata to file
+        const filePath = path.join(tempDir, `./${Date.now()}__${title}.mp3`);
+        fs.writeFileSync(filePath, audioBuffer);
 
-		// Write metadata to file
-		const filePath = path.join(tempDir, "/" + `./${Date.now()}__${title}.mp3`);
-		await mm.write(audioBuffer, audioMetadata.format, filePath);
+        // Parse audio metadata
+        const metadata = {
+            title: title || "Nexstar",
+            artist: artist || "Lingz - Lappy",
+            image: {
+                mime: 'image/jpeg',
+                type: {
+                    id: 3,
+                    name: 'front cover'
+                },
+                description: 'image description',
+                imageBuffer: image
+            }
+        };
+        NodeID3.update(metadata, filePath);
 
-		return filePath;
-	} catch (error) {
-		throw new Error('Failed to add metadata to audio file: ' + error.message);
-	}
+        return filePath;
+    } catch (error) {
+        throw new Error('Failed to add metadata to audio file: ' + error.message);
+    }
 }
+
 
 /*
 IGDL IGDL IGDL IGDL IGDL IGDL
