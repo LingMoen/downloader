@@ -169,7 +169,7 @@ const checkMediaType = (url) => {
 	}
 };
 
-async function addAudioMetadataFromUrl(audioUrl, title, artist, coverUrl, filename) {
+async function addAudioMetadataFromUrl(audioUrl, title, artist, coverUrl) {
     try {
         // Download audio file
         const audioResponse = await axios.get(audioUrl, { responseType: 'arraybuffer' });
@@ -184,7 +184,7 @@ async function addAudioMetadataFromUrl(audioUrl, title, artist, coverUrl, filena
         const coverBuffer = Buffer.from(coverResponse.data, 'binary');
 
         // Definisikan output path
-        const outputPath = path.join(tempDir, `${Date.now()}_${filename}.mp3`);
+        //const outputPath = path.join(tempDir, `${Date.now()}_${filename}.mp3`);
 
         // Add metadata
         const tags = {
@@ -205,13 +205,9 @@ async function addAudioMetadataFromUrl(audioUrl, title, artist, coverUrl, filena
                 return;
             }
             console.log('Metadata added successfully.');
-
-            // Rename output file
-            fs.renameSync(audioPath, outputPath);
-            console.log('Output file renamed.');
         });
 
-        return { path: outputPath, mimetype: contentType };
+        return { path: audioPath, mimetype: contentType };
     } catch (error) {
         console.error('Error adding metadata:', error);
     }
