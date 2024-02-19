@@ -11,6 +11,7 @@
     "express": "*",
     "axios": "*",
     "cheerio": "*",
-    "music-metadata": "*"
+    "music-metadata": "*",
+    "node-id3": "*"
   }
 }
