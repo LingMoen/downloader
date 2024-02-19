@@ -14,7 +14,7 @@ const {
 	promisify
 } = require('util');
 const mm = require('music-metadata');
-const NodeID3 = require('node-id3');
+const id3 = require('node-id3');
 
 const readFileAsync = promisify(fs.readFile);
 const tempDir = path.join(os.tmpdir(), "temp");
@@ -169,52 +169,51 @@ const checkMediaType = (url) => {
 	}
 };
 
-// Function to add metadata to audio file
-async function addMetadataToAudio(url, title, artist, imgUrl) {
+async function addAudioMetadataFromUrl(audioUrl, title, artist, coverUrl, filename) {
     try {
-        // Fetch image data if imgUrl is provided
-        let image;
-        if (imgUrl) {
-            let imageResponse = await axios.get(imgUrl, {
-                responseType: 'arraybuffer'
-            });
-            image = imageResponse.data;
-        } else {
-            let imageResponse = await axios.get("https://raw.githubusercontent.com/LingMoen/COLAB/main/wife-cover.jpg", {
-                responseType: 'arraybuffer'
-            });
-            image = imageResponse.data;
-        }
+        // Download audio file
+        const audioResponse = await axios.get(audioUrl, { responseType: 'arraybuffer' });
+        const contentType = audioResponse.headers['content-type'];
+        const audioBuffer = Buffer.from(audioResponse.data, 'binary');
+        const randomCode = Math.random().toString(36).substring(7);
+        const audioPath = path.join(tempDir, `downloaded_audio_${randomCode}.mp3`);
+        fs.writeFileSync(audioPath, audioBuffer, 'binary');
 
-        // Fetch audio data
-        const audioResponse = await axios.get(url, {
-            responseType: 'arraybuffer'
-        });
-        const audioBuffer = audioResponse.data;
+        // Download cover image
+        const coverResponse = await axios.get(coverUrl, { responseType: 'arraybuffer' });
+        const coverBuffer = Buffer.from(coverResponse.data, 'binary');
 
-        // Write metadata to file
-        const filePath = path.join(tempDir, `./${Date.now()}__${title}.mp3`);
-        fs.writeFileSync(filePath, audioBuffer);
+        // Definisikan output path
+        const outputPath = path.join(tempDir, `${Date.now()}_${filename}.mp3`);
 
-        // Parse audio metadata
-        const metadata = {
-            title: title || "Nexstar",
-            artist: artist || "Lingz - Lappy",
+        // Add metadata
+        const tags = {
+            title: title,
+            artist: artist,
             image: {
                 mime: 'image/jpeg',
-                type: {
-                    id: 3,
-                    name: 'front cover'
-                },
-                description: 'image description',
-                imageBuffer: image
+                type: { id: 3, name: 'front cover' },
+                description: 'Cover (front)',
+                imageBuffer: coverBuffer
             }
         };
-        NodeID3.update(metadata, filePath);
 
-        return filePath;
+        // Write metadata to audio file
+        id3.write(tags, audioPath, (err) => {
+            if (err) {
+                console.error('Error writing metadata:', err);
+                return;
+            }
+            console.log('Metadata added successfully.');
+
+            // Rename output file
+            fs.renameSync(audioPath, outputPath);
+            console.log('Output file renamed.');
+        });
+
+        return { path: outputPath, mimetype: contentType };
     } catch (error) {
-        throw new Error('Failed to add metadata to audio file: ' + error.message);
+        console.error('Error adding metadata:', error);
     }
 }
 
@@ -617,24 +616,23 @@ end of Twitter DL || end of Twitter DL || end of Twitter DL || end of Twitter DL
 end of Twitter DL || end of Twitter DL || end of Twitter DL || end of Twitter DL || end of Twitter DL || end of Twitter DL
 =========================================================================================*/
 
-
 app.get('/add-metadata', async (req, res) => {
-	const {
-		url,
-		title,
-		artist,
-		imgUrl
-	} = req.query;
+	let url = req.query.url || "https://github.com/LingMoen/COLAB/raw/main/Red%20Zone%20%5BFull%20Version%5D.mp3";
+	let title = req.query.title || "Lappland";
+	let artist = req.query.artist || "Nex";
+	let imgUrl = req.query.imgUrl || "https://raw.githubusercontent.com/LingMoen/COLAB/main/wife-cover.jpg";
 	try {
-		const filePath = await addMetadataToAudio(url, title, artist, imgUrl);
+		const filePath = await addAudioMetadataFromUrl(url, title, artist, imgUrl, `${artist} - ${title}`);
 		let amu = {
-			url: `https://downloader-nex.vercel.app/temp/${path.basename(filePath)}`
+			...filePath, // tambahkan tanda koma di sini
+			url: `https://downloader-nex.vercel.app/temp/${path.basename(filePath.path)}`
 		}
 		res.json(amu);
 	} catch (error) {
 		res.status(500).send(`Error: ${error}`);
 	}
 });
+
 
 app.get('/igdl', async (req, res) => {
 	try {
