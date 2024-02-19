@@ -618,7 +618,7 @@ app.get('/add-metadata', async (req, res) => {
 	let artist = req.query.artist || "Nex";
 	let imgUrl = req.query.imgUrl || "https://raw.githubusercontent.com/LingMoen/COLAB/main/wife-cover.jpg";
 	try {
-		const filePath = await addAudioMetadataFromUrl(url, title, artist, imgUrl, `${artist} - ${title}`);
+		const filePath = await addAudioMetadataFromUrl(url, title, artist, imgUrl);
 		let amu = {
 			...filePath, // tambahkan tanda koma di sini
 			url: `https://downloader-nex.vercel.app/temp/${path.basename(filePath.path)}`
