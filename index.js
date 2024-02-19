@@ -9,7 +9,6 @@ const app = express();
 import {
 	createRequire
 } from "module"
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const require = createRequire(import.meta.url)
 const {
 	promisify
