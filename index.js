@@ -87,6 +87,40 @@ async function downloadVideo(url) {
 	}
 }
 
+
+
+async function downloadFile2(url) {
+    try {
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 11; M2004J19C Build/RP1A.200720.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.129 Mobile Safari/537.36 WhatsApp/1.2.3',
+                'Referer': url,
+                'X-Forwarded-For': generateRandomIP(),
+            }
+        });
+        const contentType = response.headers['content-type'];
+        if (contentType.startsWith('image')) {
+            const randomCode = Math.random().toString(36).substring(7);
+            const imagePath = `downloaded_image_${randomCode}.png`;
+            fs.writeFileSync(path.join(tempDir, "/" + imagePath), Buffer.from(response.data));
+            return {type: "image", path: imagePath};
+        } else if (contentType.startsWith('video')) {
+            const randomCode = Math.random().toString(36).substring(7);
+            const videoPath = `downloaded_video_${randomCode}.mp4`;
+            fs.writeFileSync(path.join(tempDir, "/" + videoPath), Buffer.from(response.data));
+            return {type: "video", path: videoPath};
+        } else {
+            console.error('Unsupported content type:', contentType);
+            return null; // Atau throw error sesuai kebutuhan
+        }
+    } catch (error) {
+        console.error('Error downloading file:', error.message);
+        throw error;
+    }
+}
+
+
 async function checkFileTypeAndMimeType(url) {
 	try {
 		const response = await axios.get(url);
@@ -468,8 +502,6 @@ async function TwitterV2(url) {
 			const firstLink = $(element).find('.dl-action a:first-child').attr('href');
 			if (firstLink) {
 				item.link = firstLink;
-				let file = await checkFileTypeAndMimeType(firstLink);
-				item.type = file.split("/")[0];
 			}
 			const caption = $(element).find('.content h3').text().trim();
 			if (caption) {
@@ -506,10 +538,8 @@ async function TwitterV3(url) {
 		// Menggunakan map untuk mengambil href dan mengembalikan array promise
 		const promises = $('.square-box-btn a').map(async (index, element) => {
 			let link = $(element).attr('href');
-			let file = await checkFileTypeAndMimeType(link);
 			return {
-				link: link,
-				type: file.split("/")[0]
+				link: link
 			};
 		}).get();
 		// Menunggu semua promise selesai dan mengumpulkan hasilnya
@@ -544,8 +574,6 @@ async function TwitterV4(url) {
 			const firstLink = $(element).find('.dl-action a:first-child').attr('href');
 			if (firstLink) {
 				item.link = firstLink;
-				let file = await checkFileTypeAndMimeType(firstLink);
-				item.type = file.split("/")[0];
 			}
 			const caption = $(element).find('.content h3').text().trim();
 			if (caption) {
@@ -684,21 +712,12 @@ app.get('/twdl', async (req, res) => {
 		}
 
 		for (let item of result) {
-			if (item.type === "image") {
-				let unduh = await downloadImage(item.link);
-				result_upload.media.push({
-					type: item.type,
-					path: unduh,
-					url_path: `https://downloader-nex.vercel.app/temp/${path.basename(unduh)}`
+			let unduh = await downloadFile2(item.link)
+			result_upload.media.push({
+					type: unduh.type,
+					path: unduh.path,
+					url_path: `https://downloader-nex.vercel.app/temp/${path.basename(unduh.path)}`
 				});
-			} else if (item.type === "video") {
-				let unduh = await downloadVideo(item.link);
-				result_upload.media.push({
-					type: item.type,
-					path: unduh,
-					url_path: `https://downloader-nex.vercel.app/temp/${path.basename(unduh)}`
-				});
-			}
 		}
 
 		res.json(result_upload);
