@@ -28,7 +28,8 @@ const generateRandomIP = () => {
 
 
 // Create temp directory if it doesn't exist
-if (!fs.existsSync(tempDir)) {
+const readFileAsync = promisify(fs.readFile);
+const tempDir = path.join(os.tmpdir(), "temp");f (!fs.existsSync(tempDir)) {
 	fs.mkdirSync(tempDir, {
 		recursive: true
 	});
