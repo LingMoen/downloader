@@ -424,58 +424,56 @@ TWITTER DL || TWITTER DL || TWITTER DL || TWITTER DL || TWITTER DL || TWITTER DL
 TWITTER DL || TWITTER DL || TWITTER DL || TWITTER DL || TWITTER DL || TWITTER DL 
 ====================================================================*/
 
-const TwitterV1 = async (twitterUrl) => {
+async function TwitterV1(url) {
+	const apiUrl = 'https://savetwitter.net/api/ajaxSearch';
+	const headers = {
+		'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+		'Accept': '*/*',
+		'X-Requested-With': 'XMLHttpRequest',
+		'User-Agent': 'Mozilla/5.0 (Linux; Android 12; SM-S908B Build/SP1A.210812.016; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/99.0.4844.58 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/357.0.0.23.115;]',
+		'Referer': 'https://x2twitter.com/id',
+		'X-Forwarded-For': generateRandomIP(),
+	};
+	const data = `q=${encodeURIComponent(url)}&lang=id`;
+
 	try {
-		const base_url = "https://app.publer.io/";
-		const headers = {
-			'Content-Type': 'application/json',
-			'Accept': '*/*',
-			'X-Requested-With': 'XMLHttpRequest',
-			'User-Agent': 'Mozilla/5.0 (Linux; Android 11; M2004J19C Build/RP1A.200720.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.129 Mobile Safari/537.36 WhatsApp/1.2.3',
-			'Referer': base_url,
-			'X-Forwarded-For': generateRandomIP(),
-		};
-		const postData = {
-			url: twitterUrl,
-			iphone: false,
-		};
-		const response = await axios.post(`${base_url}hooks/media`, postData, {
+		const response = await axios.post(apiUrl, data, {
 			headers
 		});
-		const job = response.data.job_id;
-		const checkJobStatus = async (jobId) => {
-			return new Promise(async (resolve, reject) => {
-				const pollStatus = async () => {
-					try {
-						const statusResponse = await axios.get(`${base_url}api/v1/job_status/${jobId}`, {
-							headers
-						});
-						if (statusResponse.data.status === "working") {
-							setTimeout(pollStatus, 1500);
-						} else if (statusResponse.data.status === "complete") {
-							const result = statusResponse.data.payload.map(item => ({
-								link: item.path,
-								type: item.type === "photo" ? "image" : "video"
-							}));
-							resolve(result);
-						} else {
-							console.log(`Status: ${statusResponse.data.status}`);
-							reject(new Error(`Status: ${statusResponse.data.status}`));
-						}
-					} catch (error) {
-						reject(error);
-					}
-				};
-				pollStatus();
-			});
-		};
-		const result = await checkJobStatus(job);
-		return result;
+		if (!response.data.hasOwnProperty('data')) {
+			throw new Error('Data tidak ditemukan di response');
+		}
+		const $ = cheerio.load(response.data.data);
+
+		$('a[onclick="showAd()"][href="#"]').remove();
+		$('a[href="/"]').remove();
+		$('a[href="#"]').remove();
+
+		$('.tw-video').each((index, element) => {
+			const $dlAction = $(element).find('.dl-action');
+			if (index === 0) {
+				// Hanya sisakan elemen pertama
+				$dlAction.find('p').eq(1).remove(); // Hapus elemen kedua di dalam '.dl-action'
+				$dlAction.find('p').eq(2).remove(); // Hapus elemen ketiga di dalam '.dl-action'
+			} else {
+				// Hapus semua elemen kecuali yang pertama
+				$dlAction.find('p').slice(1).remove();
+			}
+		});
+
+		const $c = cheerio.load($.html())
+
+		const hrefs = [];
+		$c('a').each((index, element) => {
+			hrefs.push($(element).attr('href'));
+		});
+
+		return hrefs
+
 	} catch (error) {
-		console.error(error);
-		throw error;
+		throw new Error('Failed to fetch Twitter image: ' + error);
 	}
-};
+}
 
 async function TwitterV2(url) {
 	const apiUrl = 'https://x2twitter.com/api/ajaxSearch';
@@ -497,20 +495,31 @@ async function TwitterV2(url) {
 			throw new Error('Data tidak ditemukan di response');
 		}
 		const $ = cheerio.load(response.data.data);
-		const promises = $('.tw-video').map(async (index, element) => {
-			const item = {};
-			const firstLink = $(element).find('.dl-action a:first-child').attr('href');
-			if (firstLink) {
-				item.link = firstLink;
-			}
-			const caption = $(element).find('.content h3').text().trim();
-			if (caption) {
-				item.caption = caption;
-			}
-			return item;
-		}).get();
 
-		return Promise.all(promises);
+		$('a[onclick="showAd()"][href="#"]').remove();
+		$('a[href="/"]').remove();
+
+		$('.tw-video').each((index, element) => {
+			const $dlAction = $(element).find('.dl-action');
+			if (index === 0) {
+				// Hanya sisakan elemen pertama
+				$dlAction.find('p').eq(1).remove(); // Hapus elemen kedua di dalam '.dl-action'
+				$dlAction.find('p').eq(2).remove(); // Hapus elemen ketiga di dalam '.dl-action'
+			} else {
+				// Hapus semua elemen kecuali yang pertama
+				$dlAction.find('p').slice(1).remove();
+			}
+		});
+
+		const $c = cheerio.load($.html())
+
+		const hrefs = [];
+		$c('a').each((index, element) => {
+			hrefs.push($(element).attr('href'));
+		});
+
+		return hrefs
+
 	} catch (error) {
 		throw new Error('Failed to fetch Twitter image: ' + error);
 	}
@@ -549,63 +558,25 @@ async function TwitterV3(url) {
 	}
 }
 
-
-async function TwitterV4(url) {
-	const apiUrl = 'https://savetwitter.net/api/ajaxSearch';
-	const headers = {
-		'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-		'Accept': '*/*',
-		'X-Requested-With': 'XMLHttpRequest',
-		'User-Agent': 'Mozilla/5.0 (Linux; Android 12; SM-S908B Build/SP1A.210812.016; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/99.0.4844.58 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/357.0.0.23.115;]',
-		'Referer': 'https://savetwitter.net/id/twitter-image-downloader'
-	};
-	const data = `q=${encodeURIComponent(url)}&lang=id`;
-
-	try {
-		const response = await axios.post(apiUrl, data, {
-			headers
-		});
-		if (!response.data.hasOwnProperty('data')) {
-			throw new Error('Data tidak ditemukan di response');
-		}
-		const $ = cheerio.load(response.data.data);
-		const promises = $('.tw-video').map(async (index, element) => {
-			const item = {};
-			const firstLink = $(element).find('.dl-action a:first-child').attr('href');
-			if (firstLink) {
-				item.link = firstLink;
-			}
-			const caption = $(element).find('.content h3').text().trim();
-			if (caption) {
-				item.caption = caption;
-			}
-			return item;
-		}).get();
-
-		return Promise.all(promises);
-	} catch (error) {
-		throw new Error('Failed to fetch Twitter image: ' + error);
-	}
-}
-
 const Twitter = async (url) => {
-	let result = await TwitterV1(url);
-	if (!result) {
-		result = await TwitterV2(url);
-	}
-	if (!result) {
-		result = await TwitterV3(url);
-	}
-	if (!result) {
-		result = await TwitterV4(url);
-	}
-	if (!result) {
-		result = {
-			message: "all server error"
-		};
-	}
-	return result;
+    try {
+        let result = await TwitterV1(url);
+        return result;
+    } catch (error1) {
+        try {
+            let result = await TwitterV2(url);
+            return result;
+        } catch (error2) {
+            try {
+                let result = await TwitterV3(url);
+                return result;
+            } catch (error3) {
+                return { message: "all server error" };
+            }
+        }
+    }
 };
+
 
 /*========================================================================================
 end of Twitter DL || end of Twitter DL || end of Twitter DL || end of Twitter DL || end of Twitter DL || end of Twitter DL
@@ -706,12 +677,11 @@ app.get('/twdl', async (req, res) => {
 		}
 		let result = await Twitter(url);
 		let result_upload = {
-			title: result[0].hasOwnProperty('caption') ? result[0].caption : null,
 			media: []
 		}
 
 		for (let item of result) {
-			let unduh = await downloadFile2(item.link)
+			let unduh = await downloadFile2(item)
 			result_upload.media.push({
 					type: unduh.type,
 					path: unduh.path,
