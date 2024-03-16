@@ -24,11 +24,13 @@ const generateRandomIP = () => {
 
 // Create temp directory if it doesn't exist
 const readFileAsync = promisify(fs.readFile);
-const tempDir = path.join(os.tmpdir(), "temp");f (!fs.existsSync(tempDir)) {
+const tempDir = path.join(os.tmpdir(), "temp");
+    if (!fs.existsSync(tempDir)) {
 	fs.mkdirSync(tempDir, {
 		recursive: true
 	});
 }
+
 app.use('/temp', express.static(tempDir));
 app.use(express.json());
 
