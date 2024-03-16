@@ -103,7 +103,7 @@ async function downloadFile2(url) {
             const randomCode = Math.random().toString(36).substring(7);
             const imagePath = `downloaded_image_${randomCode}.png`;
             fs.writeFileSync(path.join(tempDir, "/" + imagePath), Buffer.from(response.data));
-            return {type: "image", path: imagePath};
+            return {type: "photo", path: imagePath};
         } else if (contentType.startsWith('video')) {
             const randomCode = Math.random().toString(36).substring(7);
             const videoPath = `downloaded_video_${randomCode}.mp4`;
