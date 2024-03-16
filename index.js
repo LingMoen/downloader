@@ -16,16 +16,11 @@ const {
 const mm = require('music-metadata');
 const id3 = require('node-id3');
 
-const readFileAsync = promisify(fs.readFile);
-const tempDir = path.join(os.tmpdir(), "temp");
 
 const generateRandomIP = () => {
 	const octet = () => Math.floor(Math.random() * 256);
 	return `${octet()}.${octet()}.${octet()}.${octet()}`;
 };
-
-
-
 
 // Create temp directory if it doesn't exist
 const readFileAsync = promisify(fs.readFile);
