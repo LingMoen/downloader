@@ -2,16 +2,17 @@
   "name": "instagram-downloader",
   "version": "1.0.0",
   "description": "Instagram downloader using Node.js and Express",
-  "main": "index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "*",
     "axios": "*",
     "cheerio": "*",
     "music-metadata": "*",
-    "node-id3": "*"
+    "node-id3": "*",
+    "file-type": "*"
   }
 }
