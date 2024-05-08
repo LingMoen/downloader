@@ -518,26 +518,14 @@ app.get('/ytmp3', async (req, res) => {
 		let hd_thumbnail = await getHDThumbnailUrl(id_video);
 		let convert = await addAudioTags(download.downloadURL, download.title || info.title, info.artist || "Nex", 2024, hd_thumbnail)
 
-        for (let item of result) {
-            let unduh = await DownloadFile(item);
-            result_upload.media.push({
-                type: unduh.mimeType,
-                path: unduh.filePath,
-                url_path: `https://downloader-nex.vercel.app/temp/${path.basename(unduh.filePath)}`
-            });
-        }
-
-        res.json(result_upload);
-
-        for (let item of result_upload.media) {
+        res.json(info, Convert: `https://downloader-nex.vercel.app/temp/${path.basename(convert.path)}`);
             try {
                 await new Promise(resolve => setTimeout(resolve, 10 * 60 * 1000)); // 10 minutes
-                await fss.unlink(item.path);
-                console.log(`File ${item.path} deleted.`);
+                await fss.unlink(convert.path);
+                console.log(`File ${convert.path} deleted.`);
             } catch (error) {
-                console.error(`Error deleting file ${item.path}:`, error);
+                console.error(`Error deleting file ${convert.path}:`, error);
             }
-        }
     } catch (error) {
         console.error('Error processing request:', error);
         res.status(500).json({
