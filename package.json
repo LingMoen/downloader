@@ -13,6 +13,18 @@
     "cheerio": "*",
     "music-metadata": "*",
     "node-id3": "*",
-    "file-type": "*"
+    "file-type": "*",
+    "googleapis": "^136.0.0",
+    "node-id3": "^0.2.6",
+    "youtubei": "^1.4.0",
+    "ytdl-core": "^4.11.5"
+  },
+  "devDependencies": {
+    "express": "^4.19.2",
+    "file-type": "^19.0.0",
+    "googleapis": "^136.0.0",
+    "node-id3": "^0.2.6",
+    "youtubei": "^1.4.0",
+    "ytdl-core": "^4.11.5"
   }
 }
