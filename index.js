@@ -511,20 +511,20 @@ app.get('/ytmp3', async (req, res) => {
         const { yurl } = req.query;
         if (!yurl) return res.status(400).json({ error: 'Parameter url is required' });
         let id_video = await GetId(yurl);
-		let url = "https://www.youtube.com/watch?v=" + id_video
+		let url = "https://www.youtube.com/watch?v=" + id_video;
 		let download = await YouTubeAudio(url);
 		let info = await getVideoInfo(url);
 		let hd_thumbnail = await getHDThumbnailUrl(id_video);
-		let convert = await addAudioTags(download.downloadURL, download.title || info.title, info.artist || "Nex", 2024, hd_thumbnail)
+		let convert = await addAudioTags(download.downloadURL, download.title || info.title, info.artist || "Nex", 2024, hd_thumbnail);
 
-        res.json(info, Convert: `https://downloader-nex.vercel.app/temp/${path.basename(convert.path)}`);
-            try {
-                await new Promise(resolve => setTimeout(resolve, 10 * 60 * 1000)); // 10 minutes
-                await fss.unlink(convert.path);
-                console.log(`File ${convert.path} deleted.`);
-            } catch (error) {
-                console.error(`Error deleting file ${convert.path}:`, error);
-            }
+        res.json({ info, Convert: `https://downloader-nex.vercel.app/temp/${path.basename(convert.path)}` });
+        try {
+            await new Promise(resolve => setTimeout(resolve, 10 * 60 * 1000)); // 10 minutes
+            await fss.unlink(convert.path);
+            console.log(`File ${convert.path} deleted.`);
+        } catch (error) {
+            console.error(`Error deleting file ${convert.path}:`, error);
+        }
     } catch (error) {
         console.error('Error processing request:', error);
         res.status(500).json({
@@ -532,6 +532,7 @@ app.get('/ytmp3', async (req, res) => {
         });
     }
 });
+
 
 app.get('/twdl', async (req, res) => {
     try {
