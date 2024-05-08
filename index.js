@@ -355,12 +355,7 @@ const YouTubeAudio = async (url) => {
     } catch (error) {
       console.error('Terjadi kesalahan saat mengambil informasi audio dari API:', error);
       console.log('Menggunakan fungsi pengganti untuk mengunduh dari YouTube...');
-      try {
-        return await YouTubeAudio2(url);
-      } catch (ytdlError) {
-        console.error('Terjadi kesalahan saat mengunduh dari YouTube:', ytdlError);
-        throw new Error('Terjadi kesalahan baik saat mengambil informasi audio dari API maupun saat mengunduh dari YouTube.');
-      }
+      throw new Error('Terjadi kesalahan baik saat mengambil informasi audio dari API maupun saat mengunduh dari YouTube.');
     }
   };
 
