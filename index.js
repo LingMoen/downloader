@@ -235,7 +235,6 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 const readFileAsync = promisify(fs.readFile);
 const tempDir = path.join(os.tmpdir(), "temp");
-const fss = require("fs")
 if (!fss.existsSync(tempDir)) {
     fss.mkdirSync(tempDir, { recursive: true });
 }
