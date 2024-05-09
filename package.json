@@ -2,10 +2,10 @@
   "name": "instagram-downloader",
   "version": "1.0.0",
   "description": "Instagram downloader using Node.js and Express",
-  "main": "server.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "express": "*",
@@ -17,7 +17,8 @@
     "googleapis": "^136.0.0",
     "node-id3": "^0.2.6",
     "youtubei": "^1.4.0",
-    "ytdl-core": "^4.11.5"
+    "ytdl-core": "^4.11.5",
+    "fluent-ffmpeg": "*"
   },
   "devDependencies": {
     "express": "^4.19.2",
@@ -25,6 +26,7 @@
     "googleapis": "^136.0.0",
     "node-id3": "^0.2.6",
     "youtubei": "^1.4.0",
-    "ytdl-core": "^4.11.5"
+    "ytdl-core": "^4.11.5",
+    "fluent-ffmpeg": "*"
   }
 }
