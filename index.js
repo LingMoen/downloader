@@ -5,20 +5,44 @@ import os from 'os';
 import express from 'express';
 import { promisify } from 'util';
 import { fileTypeFromBuffer } from 'file-type';
-
+import ffmpeg from 'fluent-ffmpeg';
+import nodeID3 from 'node-id3';
+import ytdl from 'ytdl-core';
+import FormData from 'form-data';
 const require = createRequire(import.meta.url);
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
-
-
 const { google } = require('googleapis');
-const fss = require('fs');
-const { tmpdir } = require('os');
-const nodeID3 = require('node-id3');
-const ytdl = require('ytdl-core');
+const PORT = process.env.PORT || 5000;
+const app = express();
+const readFileAsync = promisify(fs.readFile);
+import fetch from 'node-fetch';
+
+const tempDir = path.join(os.tmpdir(), "temp");
+const fss = fs.promises;
+
+(async () => {
+    if (!fs.existsSync(tempDir)) {
+        await fss.mkdir(tempDir, { recursive: true });
+    }
+})();
 
 const youtube = google.youtube({ version: 'v3', auth: 'AIzaSyBPkpdJEGtAHebbaP3_CcA1_urfMFfeLLg' });
 
+app.use('/temp', express.static(tempDir));
+app.use(express.json());
+app.get("/", (req, res) => {
+    res.type("json");
+    const keluaran = {
+        success: true,
+        author: "Nex",
+        data: {
+            igdl: "/igdl",
+            twdl: "/twdl"
+        },
+    };
+    res.send(keluaran);
+});
 
 const generateRandomIP = () => {
     const octet = () => Math.floor(Math.random() * 256);
@@ -231,170 +255,6 @@ async function twdl3(url) {
     }
 }
 
-const PORT = process.env.PORT || 5000;
-const app = express();
-const readFileAsync = promisify(fs.readFile);
-const tempDir = path.join(os.tmpdir(), "temp");
-if (!fss.existsSync(tempDir)) {
-    fss.mkdirSync(tempDir, { recursive: true });
-}
-
-
-const getVideoInfo = async (url) => {
-  try {
-    const info = await ytdl.getInfo(url);
-    const videoInfo = {
-      title: info.videoDetails.title,
-      year: info.videoDetails.publishDate.substring(0, 4),
-      thumbnail: info.videoDetails.thumbnails[0].url,
-      artist: info.videoDetails.author.name,
-      channel: info.videoDetails.ownerChannelName
-    };
-    return videoInfo;
-  } catch (error) {
-    console.error('Error fetching video info:', error);
-    throw new Error('An error occurred while fetching video info.');
-  }
-};
-
-const readFileAsBuffer = async (filePath) => {
-  try {
-    return await fss.promises.readFile(filePath);
-  } catch (error) {
-    console.error('Error reading file:', error);
-    throw new Error('An error occurred while reading the file.');
-  }
-};
-
-const addAudioTags = async (media, title, artist, year, imagecover) => {
-  try {
-    let audioBuffer = (typeof media === 'string') ? Buffer.from((await axios.get(media, { responseType: 'arraybuffer', maxContentLength: -1 })).data) : (media instanceof Buffer) ? media : (() => { throw new Error('Media harus berupa URL string atau Buffer.'); })();
-    const randomFilename = title.replace(/[^\w\s\#\$\&\-\+\(\)\/\[\]\`\×\{\}\\\\\~\•]/g, '') + '.mp3';
-    const tmpFilePath = path.join(tempDir, randomFilename);
-    fss.writeFileSync(tmpFilePath, audioBuffer);
-    const tags = { title, artist, year };
-    if (typeof imagecover === 'string') {
-      const coverBuffer = Buffer.from((await axios.get(imagecover, { responseType: 'arraybuffer' })).data);
-      tags.image = { mime: 'image/jpeg', type: { id: 3, name: 'Front Cover' }, description: 'Cover', imageBuffer: coverBuffer };
-    } else if (imagecover instanceof Buffer) {
-      tags.image = { mime: 'image/jpeg', type: { id: 3, name: 'Front Cover' }, description: 'Cover', imageBuffer: imagecover };
-    }
-    const success = nodeID3.write(tags, tmpFilePath);
-    console[success ? 'log' : 'error'](success ? 'Tag ID3 berhasil diubah!' : 'Gagal mengubah tag ID3.');
-    return { msg: `Audio berhasil diubah.`, path: `${tmpFilePath}` };
-  } catch (error) {
-    console.error('Terjadi kesalahan:', error);
-    throw new Error('Terjadi kesalahan saat mengubah audio.');
-  }
-};
-
-const listPlaylistVideos = async (playlist) => {
-  try {
-    const playlistId = playlist.startsWith("https") ? playlist.match(/list=([^&]+)/)[1] : playlist;
-    let nextPageToken = null;
-    let videos = [];
-    do {
-      const response = await youtube.playlistItems.list({ part: 'snippet', playlistId, maxResults: 50, pageToken: nextPageToken });
-      const videoIds = response.data.items.map(item => item.snippet.resourceId.videoId).join(',');
-      const videoDetailsResponse = await youtube.videos.list({ part: 'contentDetails', id: videoIds });
-      const videoDetailsMap = new Map(videoDetailsResponse.data.items.map(item => [item.id, item.contentDetails.duration]));
-      videos = videos.concat(response.data.items.map(item => {
-        const videoId = item.snippet.resourceId.videoId;
-        const duration = videoDetailsMap.get(videoId);
-        return duration ? { url: `https://www.youtube.com/watch?v=${videoId}`, title: item.snippet.title, thumbnailUrl: item.snippet.thumbnails.default.url, duration: parseISO8601(duration) } : null;
-      }).filter(Boolean));
-      nextPageToken = response.data.nextPageToken;
-    } while (nextPageToken);
-    return videos;
-  } catch (error) {
-    console.error('Terjadi kesalahan:', error);
-    throw new Error('Terjadi kesalahan saat memuat daftar video dalam playlist.');
-  }
-};
-
-function parseISO8601(duration) {
-  const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
-  const hours = (match[1] && parseInt(match[1])) || 0;
-  const minutes = (match[2] && parseInt(match[2])) || 0;
-  const seconds = (match[3] && parseInt(match[3])) || 0;
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-
-const YouTubeAudio = async (url) => {
-  const YouTubeAudio1 = async (urlyt) => {
-    try {
-      const init = await axios.get('https://nu.mnuu.nu/api/v1/init?p=y&23=1llum1n471');
-      const convert = await axios.get(init.data.convertURL, { params: { v: urlyt, f: 'mp3', _: Date.now() } });
-      const final = await axios.get(convert.data.redirectURL, { params: { v: urlyt, f: 'mp3', _: Date.now() } });
-      const progress = await axios.get(final.data.progressURL);
-      return { title: progress.data.title, downloadURL: final.data.downloadURL };
-    } catch (error) {
-      console.error('Error:', error.message);
-      throw error;
-    }
-  };
-
-  const YouTubeAudio2 = async (url) => {
-    try {
-      const info = await ytdl.getInfo(url);
-      const formats = ytdl.filterFormats(info.formats, 'audioonly');
-      if (formats.length === 0) throw new Error('Tidak ada format audio yang tersedia untuk video ini.');
-      const audioFormat = formats[0];
-      return { title: info.videoDetails.title, downloadURL: audioFormat.url };
-    } catch (error) {
-      console.error('Terjadi kesalahan:', error);
-      throw new Error('Terjadi kesalahan saat mengunduh audio dari YouTube.');
-    }
-  };
-
-  const YouTubeAudio3 = async (url) => {
-    try {
-      const response = await axios.post('https://co.wuk.sh/api/json', { url, vQuality: '360', filenamePattern: 'pretty', isAudioOnly: 'true' }, { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36', 'Referer': 'https://cobalt.tools/' } });
-      const info = await ytdl.getInfo(url);
-      return { title: info.videoDetails.title, downloadURL: response.data.url };
-    } catch (error) {
-      console.error('Terjadi kesalahan saat mengambil informasi audio dari API:', error);
-      console.log('Menggunakan fungsi pengganti untuk mengunduh dari YouTube...');
-      throw new Error('Terjadi kesalahan baik saat mengambil informasi audio dari API maupun saat mengunduh dari YouTube.');
-    }
-  };
-
-  try {
-    return await YouTubeAudio3(url);
-  } catch (error) {
-    console.error('Terjadi kesalahan saat menjalankan YouTubeAudio3:', error);
-    try {
-      return await YouTubeAudio1(url);
-    } catch (ytdlError) {
-      console.error('Terjadi kesalahan saat menjalankan YouTubeAudio1:', ytdlError);
-      try {
-        return await YouTubeAudio2(url);
-      } catch (YouTubeAudio2Error) {
-        console.error('Terjadi kesalahan saat menjalankan YouTubeAudio2:', YouTubeAudio2Error);
-        throw new Error('Semua fungsi gagal. Tidak dapat mengunduh audio dari YouTube.');
-      }
-    }
-  }
-};
-
-const getHDThumbnailUrl = async (videoId) => {
-  try {
-    const response = await youtube.videos.list({ part: 'snippet', id: videoId });
-    return response.data.items[0].snippet.thumbnails.maxres.url;
-  } catch (error) {
-    console.error('Error fetching HD thumbnail URL:', error.message);
-    return null;
-}};
-
-const GetId = (data) => {
-  const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtu(?:be\.com\/(?:watch\?(?:v=|vi=)|v\/|vi\/)|\.be\/|be\.com\/embed\/|be\.com\/shorts\/)|youtube\.com\/\?(?:v=|vi=))([\w-]{11})/;
-  const res = regex.exec(data);
-  if (res && res[1]) return res[1];
-  throw new Error("Please check the URL you have entered");
-};
-
-
-
 async function DownloadFile(url) {
     try {
         const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -403,7 +263,7 @@ async function DownloadFile(url) {
         const fileExtension = (await fileTypeFromBuffer(buffer)).ext;
         const filename = `downloaded_file_${Date.now()}.${fileExtension}`;
         const filePath = path.join(tempDir, filename);
-        await fs.writeFile(filePath, buffer);
+        await fss.writeFile(filePath, buffer);
         console.log(`File berhasil diunduh dan disimpan sebagai: ${filePath}`);
         return { mimeType, filePath };
     } catch (error) {
@@ -412,21 +272,7 @@ async function DownloadFile(url) {
     }
 }
 
-app.use('/temp', express.static(tempDir));
-app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.type("json");
-    const keluaran = {
-        success: true,
-        author: "Nex",
-        data: {
-            igdl: "/igdl",
-            twdl: "/twdl"
-        },
-    };
-    res.send(keluaran);
-});
 
 const getInstagramDownloadLinks = async (url) => {
     let result = await igdl1(url);
@@ -501,34 +347,6 @@ app.get('/igdl', async (req, res) => {
     }
 });
 
-app.get('/ytmp3', async (req, res) => {
-    try {
-        const { yurl } = req.query;
-        if (!yurl) return res.status(400).json({ error: 'Parameter url is required' });
-        let id_video = await GetId(yurl);
-		let url = "https://www.youtube.com/watch?v=" + id_video;
-		let download = await YouTubeAudio(url);
-		let info = await getVideoInfo(url);
-		let hd_thumbnail = await getHDThumbnailUrl(id_video);
-		let convert = await addAudioTags(download.downloadURL, download.title || info.title, info.artist || "Nex", 2024, hd_thumbnail);
-
-        res.json({ info, Convert: `https://downloader-nex.vercel.app/temp/${path.basename(convert.path)}` });
-        try {
-            await new Promise(resolve => setTimeout(resolve, 10 * 60 * 1000)); // 10 minutes
-            await fss.unlink(convert.path);
-            console.log(`File ${convert.path} deleted.`);
-        } catch (error) {
-            console.error(`Error deleting file ${convert.path}:`, error);
-        }
-    } catch (error) {
-        console.error('Error processing request:', error);
-        res.status(500).json({
-            error: 'Failed to process request\n' + error
-        });
-    }
-});
-
-
 app.get('/twdl', async (req, res) => {
     try {
         const { url } = req.query;
@@ -568,6 +386,130 @@ app.get('/twdl', async (req, res) => {
         });
     }
 });
+
+/****
+YTMP3
+YTMP3
+YTMP3
+YTMP3
+*****/
+async function uploader(buffer) {
+    const { ext } = await fileTypeFromBuffer(buffer);
+    const bodyForm = new FormData();
+    bodyForm.append('file', buffer, `file.${ext}`);
+
+    const response = await fetch('https://aemt.me/api/upload.php', {
+        method: 'POST',
+        body: bodyForm,
+    });
+
+    return {
+        status: response.status,
+        creator: 'Nex',
+        result: await response.json(),
+    };
+}
+
+async function getHDThumbnailUrl(videoId) {
+    try {
+        const response = await youtube.videos.list({ part: 'snippet', id: videoId });
+        return response.data.items[0].snippet.thumbnails.maxres.url;
+    } catch (error) {
+        console.error('Error fetching HD thumbnail URL:', error.message);
+        return null;
+    }
+}
+
+async function GetId(data) {
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtu(?:be\.com\/(?:watch\?(?:v=|vi=)|v\/|vi\/)|\.be\/|be\.com\/embed\/|be\.com\/shorts\/)|youtube\.com\/\?(?:v=|vi=))([\w-]{11})/;
+    const res = regex.exec(data);
+    if (res && res[1]) return res[1];
+    throw new Error("Please check the URL you have entered");
+}
+
+async function addAudioTags(media, title, artist, year, imagecover) {
+    try {
+        let audioBuffer = (typeof media === 'string') ? Buffer.from((await axios.get(media, { responseType: 'arraybuffer', maxContentLength: -1 })).data) : (media instanceof Buffer) ? media : (() => { throw new Error('Media harus berupa URL string atau Buffer.'); })();
+        const randomFilename = title.replace(/[^\w\s\#\$\&\-\+\(\)\/\[\]\`\×\{\}\\\\\~\•]/g, '') + '.mp3';
+        const tmpFilePath = path.join(tempDir, randomFilename);
+        fs.writeFileSync(tmpFilePath, audioBuffer);
+        const tags = { title, artist, year };
+        if (typeof imagecover === 'string') {
+            const coverBuffer = Buffer.from((await axios.get(imagecover, { responseType: 'arraybuffer' })).data);
+            tags.image = { mime: 'image/jpeg', type: { id: 3, name: 'Front Cover' }, description: 'Cover', imageBuffer: coverBuffer };
+        } else if (imagecover instanceof Buffer) {
+            tags.image = { mime: 'image/jpeg', type: { id: 3, name: 'Front Cover' }, description: 'Cover', imageBuffer: imagecover };
+        }
+        const success = nodeID3.write(tags, tmpFilePath);
+        console[success ? 'log' : 'error'](success ? 'Tag ID3 berhasil diubah!' : 'Gagal mengubah tag ID3.');
+        return { msg: `Audio berhasil diubah.`, path: `${tmpFilePath}` };
+    } catch (error) {
+        console.error('Terjadi kesalahan:', error);
+        throw new Error('Terjadi kesalahan saat mengubah audio.');
+    }
+}
+
+function generateRandomName(length) {
+    const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let randomName = '';
+    for (let i = 0; i < length; i++) {
+        randomName += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return randomName;
+}
+
+async function getAudioMP3Url(videoUrl) {
+    try {
+        const info = await ytdl.getInfo(videoUrl);
+        const audioFormat = ytdl.chooseFormat(info.formats, { filter: 'audioonly', quality: 'highestaudio' });
+        const path_audio = path.join(tempDir, generateRandomName(10) + '.mp3');
+        let uploadResult;
+        await new Promise((resolve, reject) => {
+            ffmpeg()
+                .input(audioFormat.url)
+                .outputOptions('-f mp3')
+                .outputOptions('-acodec libmp3lame')
+                .outputOptions('-ab 128k')
+                .outputOptions('-ar 44100')
+                .on('end', async () => {
+                    const buffer = fs.readFileSync(path_audio);
+                    const id_video = await GetId(videoUrl);
+                    const hd_thumbnail = await getHDThumbnailUrl(id_video);
+                    const convert = await addAudioTags(buffer, info.videoDetails.title, info.videoDetails.ownerChannelName, 2024, hd_thumbnail);
+                    const buffer2 = fs.readFileSync(convert.path);
+                    uploadResult = await uploader(buffer2);
+                    console.log('Upload result:', uploadResult);
+                    fs.unlinkSync(path_audio);
+                    fs.unlinkSync(convert.path);
+                    resolve(uploadResult);
+                })
+                .on('error', (err) => {
+                    console.error('FFmpeg conversion error:', err);
+                    reject(err);
+                })
+                .save(path_audio);
+        });
+        return uploadResult;
+    } catch (error) {
+        console.error('Error:', error);
+        throw new Error('Failed to process audio URL');
+    }
+}
+
+app.get('/ytmp3', async (req, res) => {
+    try {
+        const { url } = req.query;
+        if (!url) return res.status(400).json({ error: 'Parameter url is required' });
+        let result = await getAudioMP3Url(url);
+        res.json(result);
+    } catch (error) {
+        console.error('Error processing request:', error);
+        res.status(500).json({
+            error: 'Failed to process request\n' + error
+        });
+    }
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port https://localhost:${PORT}`);
