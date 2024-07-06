@@ -510,6 +510,28 @@ app.get('/ytmp3', async (req, res) => {
     }
 });
 
+const urlRegex44 = /^(https?:\/\/)(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/;
+app.get('/fetch', async (req, res) => {
+  const { url } = req.query;
+  // Validasi URL dengan regex
+  if (!urlRegex44.test(url)) {
+    return res.status(400).send('URL tidak valid');
+  }
+  try {
+    // Lakukan fetch web dengan Axios
+    const response = await axios.get(url);
+    // Cek status response
+    if (response.status !== 200) {
+      return res.status(response.status).send('Terjadi kesalahan saat mengambil data');
+    }
+    // Kembalikan data dari Axios
+    res.send(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Terjadi error saat melakukan fetch web');
+  }
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port https://localhost:${PORT}`);
