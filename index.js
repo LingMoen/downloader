@@ -554,11 +554,6 @@ function getRandomUserAgent() {
     return userAgents[randomIndex];
 }
 
-const generateRandomIP = () => {
-  const octet = () => Math.floor(Math.random() * 256);
-  return `${octet()}.${octet()}.${octet()}.${octet()}`;
-};
-
 
 app.get('/fetch', async (req, res) => {
   const { url } = req.query;
