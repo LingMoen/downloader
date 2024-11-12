@@ -51,7 +51,7 @@ const generateRandomIP = () => {
 
 
 async function fetchDownloadLinks(url) {
-    const apiEndpoint = 'https://kityune.imput.net/api/json';
+    const apiEndpoint = 'https://cobalt-7.kwiatekmiki.com/api/json';
     const requestData = { isAudioOnly: 'audio', vQuality: 'max' }
     const headers = {
         'Accept': 'application/json',
