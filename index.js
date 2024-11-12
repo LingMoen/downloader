@@ -60,7 +60,7 @@ async function fetchDownloadLinks(url) {
         'Referer': 'https://cobalt.tools/',
     };
     try {
-        const response = await axios.post('https://kityune.imput.net/api/json', { url, ...requestData }, { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } } );
+        const response = await axios.post('https://cobalt-7.kwiatekmiki.com/api/json', { url, ...requestData }, { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } } );
         const links = [];
         if (response.data.status === 'redirect') {
             links.push(response.data.url);
