@@ -51,7 +51,7 @@ const generateRandomIP = () => {
 
 
 async function fetchDownloadLinks(url) {
-    const apiEndpoint = 'https://cobalt-7.kwiatekmiki.com/api/json';
+    const apiEndpoint = 'https://arashicode-api.hf.space/cobalt';
     const requestData = { isAudioOnly: 'audio', vQuality: 'max' }
     const headers = {
         'Accept': 'application/json',
@@ -107,9 +107,7 @@ app.get('/download', async (req, res) => {
                 url_path: `https://downloader-nex.vercel.app/temp/${path.basename(download.filePath)}`
             });
         }
-
         res.json(resultUpload);
-
         for (let item of resultUpload.media) {
             try {
                 await new Promise(resolve => setTimeout(resolve, 10 * 60 * 1000)); // 10 minutes
@@ -135,21 +133,24 @@ YTMP3
 YTMP3
 YTMP3
 *****/
-async function uploader(buffer) {
-    const { ext } = await fileTypeFromBuffer(buffer);
-    const bodyForm = new FormData();
-    bodyForm.append('file', buffer, `file.${ext}`);
+async function uploader(buffer, fileName) {
+    try {
+        const form = new FormData();
+        form.append('file', buffer, {
+            filename: fileName,
+            contentType: 'application/octet-stream', // Adjust the content type as needed
+        });
 
-    const response = await fetch('https://aemt.me/api/upload.php', {
-        method: 'POST',
-        body: bodyForm,
-    });
-
-    return {
-        status: response.status,
-        creator: 'Nex',
-        result: await response.json(),
-    };
+        const response = await axios.post('https://uploader.nyxs.pw/upload', form, {
+            headers: {
+                ...form.getHeaders(),
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        throw error;
+    }
 }
 
 async function getHDThumbnailUrl(videoId) {
