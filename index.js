@@ -62,10 +62,10 @@ async function fetchDownloadLinks(url) {
     try {
         const response = await axios.post('https://arashicode-api.hf.space/cobalt', { url, ...requestData }, { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } } );
         const links = [];
-        if (response.data.status === 'redirect') {
+        if (response.data.result.status === 'redirect') {
             links.push(response.data.url);
         } else if (response.data.status === 'picker') {
-            response.data.picker.forEach(item => links.push(item.url));
+            response.data.result.picker.forEach(item => links.push(item.url));
         }
         return links;
     } catch (error) {
